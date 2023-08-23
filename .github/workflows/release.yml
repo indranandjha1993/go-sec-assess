@@ -22,12 +22,13 @@ jobs:
           sudo apt-get install -y gh
 
       - name: Authenticate with GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.ACTION_GITHUB_TOKEN }}"
+        run: echo "${{ secrets.ACTION_GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Remove existing release with same tag
         run: |
-          if gh release view ${{ github.ref }}; then
-            gh release delete ${{ github.ref }} --yes
+          TAG_NAME=${{ github.ref_name }}
+          if gh release view "$TAG_NAME"; then
+            gh release delete "$TAG_NAME" --yes
           fi
 
       - name: Setup Go
@@ -45,8 +46,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
         env:
