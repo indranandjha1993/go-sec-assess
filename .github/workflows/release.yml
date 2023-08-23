@@ -1,8 +1,4 @@
 name: Release binaries
-
-env:
-  ACTIONS_STEP_DEBUG: true
-
 on:
   push:
     tags:
