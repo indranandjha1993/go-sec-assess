@@ -9,13 +9,23 @@ jobs:
   release:
     name: Build and Release
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: ['darwin', 'windows', 'linux']
-        goarch: ['amd64']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Setup GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Authenticate with GitHub CLI
+        run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Remove existing release with same tag
+        run: |
+          if gh release view ${{ github.ref }}; then
+            gh release delete ${{ github.ref }} --yes
+          fi
 
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -28,19 +38,17 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: go build -o release/assessment-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/assessment
 
-      # Create a release first
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACTION_GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTION_GITHUB_TOKEN }}
 
-      # Now, upload the asset
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
