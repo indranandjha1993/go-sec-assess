@@ -16,15 +16,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: '^1.21'
+
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: go build -o release/assessment-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/assessment
+
+      # Create a release first
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTION_GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Now, upload the asset
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
@@ -32,4 +48,3 @@ jobs:
           asset_path: ./release/assessment-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_name: assessment-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_content_type: application/octet-stream
-
